@@ -2,7 +2,24 @@ import socket
 import json
 import time
 
+
+def envoyer_json(client, message):
+    donnees = json.dumps(message) + "\n"
+    client.sendall(donnees.encode())
+
+
+def recevoir_json(fichier_client):
+    ligne = fichier_client.readline()
+
+    if ligne == "":
+        return None
+
+    return json.loads(ligne)
+
+
 serveur = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+serveur.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 serveur.bind(("192.168.50.2", 5000))
 serveur.listen()
@@ -13,71 +30,81 @@ client, adresse = serveur.accept()
 
 print("VM1 connectée :", adresse)
 
-# 1. Réception de la détection du VP
-donnees = client.recv(1024).decode()
-message = json.loads(donnees)
+fichier_client = client.makefile("r", encoding="utf-8")
 
-print("Type :", message["type"])
-print("Axe :", message["axe"])
+axe_courant = None
 
 
-# 2. VM2 ordonne la sécurisation
-reponse = {
-    "type": "COMMANDE",
-    "action": "TOUS_ROUGES"
-}
+while True:
 
-client.send(json.dumps(reponse).encode())
+    message = recevoir_json(fichier_client)
 
-print("Commande envoyée :", reponse["action"])
+    if message is None:
+        print("VM1 s'est déconnectée.")
+        break
 
+    type_message = message["type"]
 
-# 3. VM2 attend que la zone soit libre
-donnees = client.recv(1024).decode()
-message_zone = json.loads(donnees)
+    print("\nMessage reçu :", type_message)
 
-print("Message reçu :", message_zone["type"])
+    if type_message == "VP_DETECTE":
 
+        axe_courant = message["axe"]
 
-# 4. Si la zone est libre, on accorde la priorité
-if message_zone["type"] == "ZONE_LIBRE":
+        print("VP détecté sur l'axe :", axe_courant)
 
-    reponse = {
-        "type": "COMMANDE",
-        "action": "PRIORITE_ACCORDEE",
-        "axe": message["axe"]
-    }
+        reponse = {
+            "type": "COMMANDE",
+            "action": "TOUS_ROUGES"
+        }
 
-    client.send(json.dumps(reponse).encode())
+        envoyer_json(client, reponse)
 
-    print("Priorité accordée à l'axe :", message["axe"])
+        print("Commande envoyée : TOUS_ROUGES")
 
 
-# 5. VM2 attend que le VP ait traversé
-donnees = client.recv(1024).decode()
-message_passage = json.loads(donnees)
+    elif type_message == "ZONE_LIBRE":
 
-print("Message reçu :", message_passage["type"])
+        reponse = {
+            "type": "COMMANDE",
+            "action": "PRIORITE_ACCORDEE",
+            "axe": axe_courant
+        }
 
+        envoyer_json(client, reponse)
 
-# 6. Le VP est passé
-if message_passage["type"] == "VP_PASSE":
-
-    print("Le véhicule prioritaire a traversé.")
-
-    print("Retour progressif vers le mode normal...")
-
-    time.sleep(2)
-
-    reponse = {
-        "type": "COMMANDE",
-        "action": "RETOUR_NORMAL"
-    }
-
-    client.send(json.dumps(reponse).encode())
-
-    print("Commande envoyée : RETOUR_NORMAL")
+        print("Priorité accordée à :", axe_courant)
 
 
+    elif type_message == "VP_PASSE":
+
+        print("Le véhicule prioritaire est passé.")
+
+        print("Retour progressif...")
+
+        time.sleep(2)
+
+        reponse = {
+            "type": "COMMANDE",
+            "action": "RETOUR_NORMAL"
+        }
+
+        envoyer_json(client, reponse)
+
+        print("Retour au mode normal.")
+
+        axe_courant = None
+
+
+    elif type_message == "ARRET":
+
+        print("Arrêt demandé par VM1.")
+
+        break
+
+
+fichier_client.close()
 client.close()
 serveur.close()
+
+print("Serveur arrêté.")
