@@ -29,12 +29,12 @@ class Vehicule:
         else:
             couleur = feux.est_ouest
 
-        # Si le feu est vert, le véhicule peut avancer
+        # Feu vert : le véhicule peut avancer
         if couleur == "VERT":
             return True
 
-        # Si le véhicule a déjà franchi la ligne du carrefour,
-        # il doit continuer pour libérer la zone
+        # Le véhicule a déjà franchi le feu :
+        # il continue pour quitter le carrefour
 
         if self.axe == "NORD" and self.y >= 40:
             return True
@@ -48,5 +48,76 @@ class Vehicule:
         elif self.axe == "EST" and self.x <= 60:
             return True
 
-        # Sinon il reste arrêté
+        # Feu rouge ou orange :
+        # le véhicule peut encore avancer jusqu'à la ligne d'arrêt
+
+        if self.axe == "NORD" and self.y < 35:
+            return True
+
+        elif self.axe == "SUD" and self.y > 65:
+            return True
+
+        elif self.axe == "OUEST" and self.x < 35:
+            return True
+
+        elif self.axe == "EST" and self.x > 65:
+            return True
+
+        # Il est arrivé à la ligne d'arrêt
+        return False
+
+    def est_sorti(self):
+
+        if self.x < 0 or self.x > 100:
+            return True
+
+        if self.y < 0 or self.y > 100:
+            return True
+
+        return False
+
+    def vehicule_devant(self, vehicules):
+
+        distance_securite = 10
+
+        for autre in vehicules:
+
+            if autre == self:
+                continue
+
+            if autre.axe != self.axe:
+                continue
+
+            if self.axe == "NORD":
+
+                if autre.y > self.y:
+                    distance = autre.y - self.y
+
+                    if distance <= distance_securite:
+                        return True
+
+            elif self.axe == "SUD":
+
+                if autre.y < self.y:
+                    distance = self.y - autre.y
+
+                    if distance <= distance_securite:
+                        return True
+
+            elif self.axe == "OUEST":
+
+                if autre.x > self.x:
+                    distance = autre.x - self.x
+
+                    if distance <= distance_securite:
+                        return True
+
+            elif self.axe == "EST":
+
+                if autre.x < self.x:
+                    distance = self.x - autre.x
+
+                    if distance <= distance_securite:
+                        return True
+
         return False

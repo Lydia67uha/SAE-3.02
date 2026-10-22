@@ -134,3 +134,25 @@ else:
 
 print("Nouvelle position :", voiture_test.x, voiture_test.y)
 print("Zone libre :", zone.est_libre([voiture_test]))
+
+print("\n--- TEST APPROCHE FEU ROUGE ---")
+
+feux = Feux()
+
+voiture_test = Vehicule(
+    10,
+    "VOITURE",
+    "OUEST",
+    20,
+    50,
+    False
+)
+
+for i in range(5):
+
+    print("Position :", voiture_test.x)
+
+    if voiture_test.peut_avancer(feux):
+        voiture_test.avancer(5)
+    else:
+        print("La voiture attend au feu.")
