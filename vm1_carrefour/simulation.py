@@ -3,10 +3,15 @@ import time
 from vehicule import Vehicule
 from feux import Feux
 from generateur_trafic import (doit_creer_vehicule, creer_vehicule, axe_aleatoire, entree_libre)
-
+from zone_conflit import ZoneConflit
 
 feux = Feux()
-
+zone = ZoneConflit(
+    40,
+    60,
+    40,
+    60
+)
 vehicules = []
 
 prochain_id = 1
@@ -94,11 +99,24 @@ for tour in range(40):
 
     compteur_phase += 1
 
-
     if compteur_phase >= feux.duree_phase():
 
-        feux.phase_suivante()
+        if feux.phase == 2 or feux.phase == 5:
 
-        compteur_phase = 0
+            if zone.est_libre(vehicules):
 
-        print("\n>>> CHANGEMENT DE PHASE <<<")
+                feux.phase_suivante()
+                compteur_phase = 0
+
+                print("\n>>> ZONE LIBRE : CHANGEMENT DE PHASE <<<")
+
+            else:
+
+                print("\n>>> ZONE OCCUPEE : TOUS ROUGES MAINTENUS <<<")
+
+        else:
+
+            feux.phase_suivante()
+            compteur_phase = 0
+
+            print("\n>>> CHANGEMENT DE PHASE <<<")

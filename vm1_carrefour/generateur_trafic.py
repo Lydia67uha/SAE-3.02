@@ -27,20 +27,20 @@ def doit_creer_vehicule(densite):
 def creer_vehicule(identifiant, axe):
 
     if axe == "NORD":
-        x = 50
+        x = 47
         y = 0
 
     elif axe == "SUD":
-        x = 50
+        x = 53
         y = 100
 
     elif axe == "OUEST":
         x = 0
-        y = 50
+        y = 53
 
     else:
         x = 100
-        y = 50
+        y = 47
 
     return Vehicule(identifiant,"VOITURE", axe, x, y,False)
 
