@@ -73,7 +73,7 @@ for tour in range(10):
         feux.nord_sud,
         "| Est/Ouest =",
         feux.est_ouest
-    )
+    ).
 
 
     for vehicule in vehicules:
@@ -158,4 +158,4 @@ for tour in range(10):
             feux.phase_suivante()
             compteur_phase = 0
 
-            print("\n>>> CHANGEMENT DE PHASE <<<")
+            print("\n>>> CHANGEMENT DE PHASE <<<").

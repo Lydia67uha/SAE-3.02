@@ -89,4 +89,4 @@ def creer_vehicule_prioritaire(identifiant, axe, type_vehicule, manoeuvre="TOUT_
         x = 100
         y = 47
 
-    return Vehicule(identifiant, type_vehicule, axe, x, y,True, manoeuvre)
+    return Vehicule(identifiant, type_vehicule, axe, x, y,True, manoeuvre).

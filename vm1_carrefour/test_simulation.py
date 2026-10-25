@@ -278,4 +278,4 @@ vehicules_test = [voiture1, voiture2]
 if voiture1.vehicule_devant(vehicules_test):
     print("Voiture 1 détecte bien un véhicule devant.")
 else:
-    print("ERREUR : aucun véhicule détecté devant.")
+    print("ERREUR : aucun véhicule détecté devant.").
