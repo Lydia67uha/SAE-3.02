@@ -2,8 +2,11 @@ import time
 
 from vehicule import Vehicule
 from feux import Feux
-from generateur_trafic import (doit_creer_vehicule, creer_vehicule, axe_aleatoire, entree_libre)
+from generateur_trafic import (doit_creer_vehicule, creer_vehicule, axe_aleatoire, entree_libre, creer_vehicule_prioritaire)
 from zone_conflit import ZoneConflit
+from capteur import Capteur
+
+capteur = Capteur()
 
 feux = Feux()
 zone = ZoneConflit(
@@ -16,12 +19,31 @@ vehicules = []
 
 prochain_id = 1
 
+ambulance = creer_vehicule_prioritaire(
+    prochain_id,
+    "NORD",
+    "AMBULANCE"
+)
+
+vehicules.append(ambulance)
+
+prochain_id += 1
+
 densite = "FORTE"
 
 compteur_phase = 0
 
+voiture_test = creer_vehicule(
+    prochain_id,
+    "NORD",
+    "DROITE"
+)
 
-for tour in range(40):
+vehicules.append(voiture_test)
+
+prochain_id += 1
+
+for tour in range(10):
 
     if doit_creer_vehicule(densite):
 
@@ -65,6 +87,23 @@ for tour in range(40):
             vehicule.x,
             vehicule.y
         )
+
+        if capteur.detecter(vehicule):
+
+            print(
+                "Capteur : véhicule",
+                vehicule.identifiant,
+                "détecté"
+            )
+
+            if capteur.est_prioritaire(vehicule):
+                print(
+                    ">>> VEHICULE PRIORITAIRE DETECTE :",
+                    vehicule.type_vehicule,
+                    "- axe",
+                    vehicule.axe,
+                    "<<<"
+                )
 
         if vehicule.peut_avancer(feux):
 
