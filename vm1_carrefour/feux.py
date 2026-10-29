@@ -7,6 +7,7 @@ class Feux:
         self.est_ouest = "ROUGE"
 
         self.durees = [8, 2, 1, 8, 2, 1]
+        self.axe_prioritaire = None
 
 
     def phase_suivante(self):
@@ -46,6 +47,16 @@ class Feux:
         self.nord_sud = "ROUGE"
         self.est_ouest = "ROUGE"
 
+    def donner_priorite(self, axe):
+
+        if axe == "NORD" or axe == "SUD":
+            self.nord_sud = "VERT"
+            self.est_ouest = "ROUGE"
+
+        else:
+            self.nord_sud = "ROUGE"
+            self.est_ouest = "VERT"
+
 
     def afficher(self):
         print("Nord/Sud :", self.nord_sud)
@@ -53,3 +64,26 @@ class Feux:
 
     def duree_phase(self):
         return self.durees[self.phase]
+
+    def activer_priorite(self, axe):
+        self.axe_prioritaire = axe
+
+    def desactiver_priorite(self):
+        self.axe_prioritaire = None
+
+    def couleur_pour_axe(self, axe):
+
+        # Priorité active :
+        # seule l'entrée du VP reçoit le vert
+        if self.axe_prioritaire is not None:
+
+            if axe == self.axe_prioritaire:
+                return "VERT"
+
+            return "ROUGE"
+
+        # Fonctionnement normal
+        if axe == "NORD" or axe == "SUD":
+            return self.nord_sud
+
+        return self.est_ouest

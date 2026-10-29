@@ -278,4 +278,39 @@ vehicules_test = [voiture1, voiture2]
 if voiture1.vehicule_devant(vehicules_test):
     print("Voiture 1 détecte bien un véhicule devant.")
 else:
-    print("ERREUR : aucun véhicule détecté devant.").
+    print("ERREUR : aucun véhicule détecté devant.")
+
+print("\n--- TEST VIRAGE GAUCHE AVEC VEHICULE EN FACE ---")
+
+# Voiture qui vient du NORD et veut tourner à gauche
+voiture_gauche = Vehicule(
+    300,
+    "VOITURE",
+    "NORD",
+    47,
+    35,
+    False,
+    "GAUCHE"
+)
+
+# Voiture venant du SUD, proche du carrefour
+voiture_face = Vehicule(
+    301,
+    "VOITURE",
+    "SUD",
+    53,
+    60,
+    False,
+    "TOUT_DROIT"
+)
+
+vehicules_test = [
+    voiture_gauche,
+    voiture_face
+]
+voiture_face.y = 45
+
+if voiture_gauche.vehicule_en_face(vehicules_test):
+    print("La voiture doit encore attendre.")
+else:
+    print("Le véhicule en face est passé : la voiture peut tourner.")

@@ -97,10 +97,7 @@ class Vehicule:
 
     def peut_avancer(self, feux):
 
-        if self.axe in ["NORD", "SUD"]:
-            couleur = feux.nord_sud
-        else:
-            couleur = feux.est_ouest
+        couleur = feux.couleur_pour_axe(self.axe)
 
         # Feu vert : le véhicule peut avancer
         if couleur == "VERT":
@@ -215,4 +212,78 @@ class Vehicule:
                         return True
 
         return False
-    .
+
+    def vehicule_en_face(self, vehicules):
+
+        # Cette vérification sert seulement
+        # aux véhicules qui tournent à gauche
+        if self.manoeuvre != "GAUCHE":
+            return False
+
+        if self.a_tourne:
+            return False
+
+        # Le véhicule doit être proche du centre
+        # avant de vérifier s'il peut tourner
+
+        if self.axe == "NORD" and self.y < 45:
+            return False
+
+        elif self.axe == "SUD" and self.y > 55:
+            return False
+
+        elif self.axe == "OUEST" and self.x < 45:
+            return False
+
+        elif self.axe == "EST" and self.x > 55:
+            return False
+
+        # Déterminer l'axe opposé
+        if self.axe == "NORD":
+            axe_oppose = "SUD"
+
+        elif self.axe == "SUD":
+            axe_oppose = "NORD"
+
+        elif self.axe == "OUEST":
+            axe_oppose = "EST"
+
+        else:
+            axe_oppose = "OUEST"
+
+        for autre in vehicules:
+
+            if autre == self:
+                continue
+
+            if autre.axe != axe_oppose:
+                continue
+
+            # Si le véhicule opposé a déjà tourné,
+            # il n'est plus un véhicule arrivant en face
+            if autre.a_tourne:
+                continue
+
+            # Deux véhicules opposés qui tournent tous les deux
+            # à gauche peuvent tourner dans notre simulation
+            if autre.manoeuvre == "GAUCHE":
+                continue
+
+            # Véhicule opposé proche du carrefour
+            if autre.axe == "NORD":
+                if 35 <= autre.y <= 50:
+                    return True
+
+            elif autre.axe == "SUD":
+                if 50 <= autre.y <= 65:
+                    return True
+
+            elif autre.axe == "OUEST":
+                if 35 <= autre.x <= 50:
+                    return True
+
+            elif autre.axe == "EST":
+                if 50 <= autre.x <= 65:
+                    return True
+
+        return False

@@ -24,7 +24,48 @@ def doit_creer_vehicule(densite):
 
     return False
 
-def creer_vehicule(identifiant, axe, manoeuvre="TOUT_DROIT"):
+
+def axe_aleatoire():
+
+    axes = [
+        "NORD",
+        "SUD",
+        "EST",
+        "OUEST"
+    ]
+
+    return random.choice(axes)
+
+
+def manoeuvre_aleatoire():
+
+    manoeuvres = [
+        "TOUT_DROIT",
+        "TOUT_DROIT",
+        "DROITE",
+        "GAUCHE"
+    ]
+
+    return random.choice(manoeuvres)
+
+def type_vp_aleatoire():
+
+    types_vp = [
+        "AMBULANCE",
+        "POLICE",
+        "GENDARMERIE",
+        "POMPIERS",
+        "SAMU",
+        "TRANSPORT_MEDICAL_URGENT"
+    ]
+
+    return random.choice(types_vp)
+
+def creer_vehicule(
+    identifiant,
+    axe,
+    manoeuvre="TOUT_DROIT"
+):
 
     if axe == "NORD":
         x = 47
@@ -38,17 +79,54 @@ def creer_vehicule(identifiant, axe, manoeuvre="TOUT_DROIT"):
         x = 0
         y = 53
 
-    else:
+    elif axe == "EST":
         x = 100
         y = 47
 
-    return Vehicule(identifiant,"VOITURE", axe, x, y,False, manoeuvre)
+    return Vehicule(
+        identifiant,
+        "VOITURE",
+        axe,
+        x,
+        y,
+        False,
+        manoeuvre
+    )
 
-def axe_aleatoire():
 
-    axes = ["NORD","SUD","EST","OUEST"]
+def creer_vehicule_prioritaire(
+    identifiant,
+    axe,
+    type_vehicule,
+    manoeuvre="TOUT_DROIT"
+):
 
-    return random.choice(axes)
+    if axe == "NORD":
+        x = 47
+        y = 0
+
+    elif axe == "SUD":
+        x = 53
+        y = 100
+
+    elif axe == "OUEST":
+        x = 0
+        y = 53
+
+    elif axe == "EST":
+        x = 100
+        y = 47
+
+    return Vehicule(
+        identifiant,
+        type_vehicule,
+        axe,
+        x,
+        y,
+        True,
+        manoeuvre
+    )
+
 
 def entree_libre(axe, vehicules):
 
@@ -70,23 +148,3 @@ def entree_libre(axe, vehicules):
             return False
 
     return True
-
-def creer_vehicule_prioritaire(identifiant, axe, type_vehicule, manoeuvre="TOUT_DROIT"):
-
-    if axe == "NORD":
-        x = 47
-        y = 0
-
-    elif axe == "SUD":
-        x = 53
-        y = 100
-
-    elif axe == "OUEST":
-        x = 0
-        y = 53
-
-    elif axe == "EST":
-        x = 100
-        y = 47
-
-    return Vehicule(identifiant, type_vehicule, axe, x, y,True, manoeuvre).
