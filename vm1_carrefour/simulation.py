@@ -11,7 +11,8 @@ from generateur_trafic import (
     axe_aleatoire,
     manoeuvre_aleatoire,
     type_vp_aleatoire,
-    entree_libre
+    entree_libre,
+    doit_creer_vp
 )
 
 
@@ -75,7 +76,7 @@ prochain_id = 1
 densite = "MOYENNE"
 
 compteur_phase = 0
-
+compteur_retour = 0
 
 # --------------------------------------------------
 # ETAT DU SYSTEME
@@ -85,53 +86,85 @@ mode = "NORMAL"
 
 vp_en_cours = None
 
+vp_en_attente = []
 
-# Sert uniquement au test actuel
-vp_cree = False
+vp_deja_detectes = []
 
+def est_avant_ligne_feu(vehicule):
 
+    if vehicule.axe == "NORD":
+        return vehicule.y < 35
+
+    elif vehicule.axe == "SUD":
+        return vehicule.y > 65
+
+    elif vehicule.axe == "OUEST":
+        return vehicule.x < 35
+
+    elif vehicule.axe == "EST":
+        return vehicule.x > 65
+
+    return False
+
+def vp_a_franchi_ligne(vp):
+
+    if vp.axe == "NORD":
+        return vp.y > 35
+
+    elif vp.axe == "SUD":
+        return vp.y < 65
+
+    elif vp.axe == "OUEST":
+        return vp.x > 35
+
+    elif vp.axe == "EST":
+        return vp.x < 65
+
+    return False
 # --------------------------------------------------
 # BOUCLE DE SIMULATION
 # --------------------------------------------------
 
-for tour in range(40):
-
+for tour in range(80):
 
     # ==================================================
-    # CREATION DU VP
-    # UNIQUEMENT POUR NOTRE TEST
+    # CREATION ALEATOIRE D'UN VEHICULE PRIORITAIRE
     # ==================================================
 
-    if tour == 5 and not vp_cree:
+    if doit_creer_vp():
 
-        type_vp = type_vp_aleatoire()
+        axe_vp = axe_aleatoire()
 
-        manoeuvre_vp = manoeuvre_aleatoire()
+        if entree_libre(
+                axe_vp,
+                vehicules
+        ):
+            type_vp = type_vp_aleatoire()
 
-        vehicule_prioritaire = creer_vehicule_prioritaire(
-            prochain_id,
-            "NORD",
-            type_vp,
-            manoeuvre_vp
-        )
+            manoeuvre_vp = manoeuvre_aleatoire()
 
-        vehicules.append(
-            vehicule_prioritaire
-        )
+            nouveau_vp = creer_vehicule_prioritaire(
+                prochain_id,
+                axe_vp,
+                type_vp,
+                manoeuvre_vp
+            )
 
-        print(
-            "\n>>> NOUVEAU VEHICULE PRIORITAIRE :",
-            type_vp,
-            "- axe NORD",
-            "- manoeuvre :",
-            manoeuvre_vp,
-            "<<<"
-        )
+            vehicules.append(
+                nouveau_vp
+            )
 
-        prochain_id += 1
+            print(
+                "\n>>> NOUVEAU VEHICULE PRIORITAIRE :",
+                type_vp,
+                "- axe",
+                axe_vp,
+                "- manoeuvre :",
+                manoeuvre_vp,
+                "<<<"
+            )
 
-        vp_cree = True
-
+            prochain_id += 1
 
     # ==================================================
     # CREATION ALEATOIRE DES VEHICULES NORMAUX
@@ -239,36 +272,66 @@ for tour in range(40):
             # ----------------------------------------------
 
             if capteur.est_prioritaire(
-                vehicule
+                    vehicule
             ):
 
-                # On ne déclenche la procédure
-                # que si le carrefour est encore NORMAL
-                if mode == "NORMAL":
+                # On ne traite chaque VP qu'une seule fois
+                if vehicule.identifiant not in vp_deja_detectes:
 
-                    mode = "SECURISATION"
-
-                    vp_en_cours = vehicule
-
-                    # On coupe la priorité éventuelle
-                    feux.desactiver_priorite()
-
-                    # Tous les axes passent au rouge
-                    feux.tous_rouges()
-
-                    compteur_phase = 0
-
-                    print(
-                        ">>> VEHICULE PRIORITAIRE DETECTE :",
-                        vehicule.type_vehicule,
-                        "- axe",
-                        vehicule.axe,
-                        "<<<"
+                    vp_deja_detectes.append(
+                        vehicule.identifiant
                     )
 
-                    print(
-                        ">>> PASSAGE EN MODE SECURISATION <<<"
-                    )
+                    # ==========================================
+                    # AUCUN VP EN COURS
+                    # ==========================================
+
+                    if mode == "NORMAL" and vp_en_cours is None:
+
+                        mode = "SECURISATION"
+
+                        vp_en_cours = vehicule
+
+                        feux.desactiver_priorite()
+
+                        feux.tous_rouges()
+
+                        compteur_phase = 0
+
+                        print(
+                            ">>> VEHICULE PRIORITAIRE DETECTE :",
+                            vehicule.type_vehicule,
+                            "- axe",
+                            vehicule.axe,
+                            "<<<"
+                        )
+
+                        print(
+                            ">>> PASSAGE EN MODE SECURISATION <<<"
+                        )
+
+
+                    # ==========================================
+                    # UN AUTRE VP EST DEJA EN COURS
+                    # ==========================================
+
+                    else:
+
+                        vp_en_attente.append(
+                            vehicule
+                        )
+
+                        print(
+                            ">>> NOUVEAU VP DETECTE :",
+                            vehicule.type_vehicule,
+                            "- axe",
+                            vehicule.axe,
+                            "<<<"
+                        )
+
+                        print(
+                            ">>> VP PLACE EN ATTENTE <<<"
+                        )
 
 
         # ==================================================
@@ -284,10 +347,8 @@ for tour in range(40):
 
             if vehicule == vp_en_cours:
 
-                # S'il y a encore une voiture devant,
-                # le VP ne peut pas lui passer dessus
                 if vehicule.vehicule_devant(
-                    vehicules
+                        vehicules
                 ):
 
                     print(
@@ -300,6 +361,26 @@ for tour in range(40):
 
                     vehicule.avancer(5)
 
+                    # Le VP vient-il de franchir son feu ?
+                    if vp_a_franchi_ligne(
+                            vp_en_cours
+                    ):
+                        mode = "PASSAGE_VP"
+
+                        # Le vert prioritaire est supprimé
+                        feux.desactiver_priorite()
+
+                        # Tous les axes repassent immédiatement au rouge
+                        feux.tous_rouges()
+
+                        print(
+                            ">>> LE VP A FRANCHI LA LIGNE DU FEU <<<"
+                        )
+
+                        print(
+                            ">>> TOUS LES FEUX REPASSENT AU ROUGE <<<"
+                        )
+
 
             # ----------------------------------------------
             # CAS 2 : VEHICULE DEVANT LE VP
@@ -309,6 +390,38 @@ for tour in range(40):
                 vehicule,
                 vp_en_cours
             ):
+                def est_avant_ligne_feu(vehicule):
+
+                    if vehicule.axe == "NORD":
+                        return vehicule.y < 35
+
+                    elif vehicule.axe == "SUD":
+                        return vehicule.y > 65
+
+                    elif vehicule.axe == "OUEST":
+                        return vehicule.x < 35
+
+                    elif vehicule.axe == "EST":
+                        return vehicule.x > 65
+
+                    return False
+
+
+                def vp_a_franchi_ligne(vp):
+
+                    if vp.axe == "NORD":
+                        return vp.y > 35
+
+                    elif vp.axe == "SUD":
+                        return vp.y < 65
+
+                    elif vp.axe == "OUEST":
+                        return vp.x > 35
+
+                    elif vp.axe == "EST":
+                        return vp.x < 65
+
+                    return False
 
                 # Ces véhicules sont autorisés
                 # à dégager la voie du VP
@@ -334,16 +447,35 @@ for tour in range(40):
 
             else:
 
-                # Même entrée que le VP mais derrière lui :
-                # on l'empêche de profiter du vert
                 if vehicule.axe == vp_en_cours.axe:
 
-                    print(
-                        "Véhicule",
-                        vehicule.identifiant,
-                        "arrêté derrière le VP."
-                    )
+                    # Le véhicule derrière le VP peut avancer
+                    # jusqu'à la ligne du feu
+                    if est_avant_ligne_feu(
+                            vehicule
+                    ):
 
+                        if vehicule.vehicule_devant(
+                                vehicules
+                        ):
+
+                            print(
+                                "Véhicule",
+                                vehicule.identifiant,
+                                "attend le véhicule devant lui."
+                            )
+
+                        else:
+
+                            vehicule.avancer(5)
+
+                    else:
+
+                        print(
+                            "Véhicule",
+                            vehicule.identifiant,
+                            "arrêté à la ligne pendant la priorité."
+                        )
 
                 # Véhicules venant des autres entrées
                 else:
@@ -375,6 +507,75 @@ for tour in range(40):
                             vehicule.identifiant,
                             "arrêté pendant le passage prioritaire."
                         )
+
+        elif mode == "PASSAGE_VP":
+
+            # Tous les feux sont rouges.
+            #
+            # Le VP étant déjà engagé,
+            # peut_avancer() lui permet de continuer.
+            #
+            # Les autres véhicules peuvent seulement
+            # approcher de leur ligne rouge.
+
+            if vehicule.peut_avancer(
+                    feux
+            ):
+
+                if vehicule.vehicule_devant(
+                        vehicules
+                ):
+
+                    print(
+                        "Véhicule",
+                        vehicule.identifiant,
+                        "arrêté derrière un autre véhicule."
+                    )
+
+                else:
+
+                    vehicule.avancer(5)
+
+            else:
+
+                print(
+                    "Véhicule",
+                    vehicule.identifiant,
+                    "arrêté pendant le passage du VP."
+                )
+
+        elif mode == "RETOUR_NORMAL":
+
+            # Tous les feux sont encore rouges.
+            # Les véhicules peuvent seulement :
+            # - terminer leur passage s'ils étaient engagés
+            # - ou avancer jusqu'à leur ligne de feu
+
+            if vehicule.peut_avancer(
+                    feux
+            ):
+
+                if vehicule.vehicule_devant(
+                        vehicules
+                ):
+
+                    print(
+                        "Véhicule",
+                        vehicule.identifiant,
+                        "arrêté derrière un autre véhicule."
+                    )
+
+                else:
+
+                    vehicule.avancer(5)
+
+            else:
+
+                print(
+                    "Véhicule",
+                    vehicule.identifiant,
+                    "attend le retour au fonctionnement normal."
+                )
 
 
         # ==================================================
@@ -585,3 +786,98 @@ for tour in range(40):
         feux.activer_priorite(
             vp_en_cours.axe
         )
+
+
+    elif mode == "PASSAGE_VP":
+
+        feux.desactiver_priorite()
+
+        feux.tous_rouges()
+
+        # Le VP doit avoir quitté la zone de conflit
+
+        # ET la zone doit être complètement vide
+
+        if (
+
+                not zone.contient(vp_en_cours)
+
+                and zone.est_libre(vehicules)
+
+        ):
+            mode = "RETOUR_NORMAL"
+
+            compteur_retour = 0
+
+            print(
+
+                "\n>>> LE VP A LIBERE LA ZONE DE CONFLIT <<<"
+
+            )
+
+            print(
+
+                ">>> PASSAGE EN MODE RETOUR_NORMAL <<<"
+
+            )
+    elif mode == "RETOUR_NORMAL":
+
+        feux.desactiver_priorite()
+
+        feux.tous_rouges()
+
+        compteur_retour += 1
+
+        # On garde un tour complet tous rouges
+        if compteur_retour >= 1:
+
+            # ==========================================
+            # UN AUTRE VP ATTEND
+            # ==========================================
+
+            if len(vp_en_attente) > 0:
+
+                vp_en_cours = vp_en_attente.pop(0)
+
+                mode = "SECURISATION"
+
+                compteur_phase = 0
+
+                feux.desactiver_priorite()
+
+                feux.tous_rouges()
+
+                print(
+                    "\n>>> LE PREMIER VP EST TERMINE <<<"
+                )
+
+                print(
+                    ">>> VP EN ATTENTE PRIS EN CHARGE :",
+                    vp_en_cours.type_vehicule,
+                    "- axe",
+                    vp_en_cours.axe,
+                    "<<<"
+                )
+
+                print(
+                    ">>> NOUVELLE SECURISATION <<<"
+                )
+
+
+            # ==========================================
+            # AUCUN AUTRE VP
+            # ==========================================
+
+            else:
+
+                feux.reinitialiser_cycle_normal()
+
+                compteur_phase = 0
+
+                mode = "NORMAL"
+
+                vp_en_cours = None
+
+                print(
+                    "\n>>> RETOUR AU FONCTIONNEMENT NORMAL <<<"
+                )

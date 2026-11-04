@@ -148,3 +148,12 @@ def entree_libre(axe, vehicules):
             return False
 
     return True
+
+def doit_creer_vp():
+
+    nombre = random.randint(1, 100)
+
+    if nombre <= 10:
+        return True
+
+    return False

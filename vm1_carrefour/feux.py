@@ -87,3 +87,12 @@ class Feux:
             return self.nord_sud
 
         return self.est_ouest
+
+    def reinitialiser_cycle_normal(self):
+
+        self.axe_prioritaire = None
+
+        self.phase = 0
+
+        self.nord_sud = "VERT"
+        self.est_ouest = "ROUGE"
