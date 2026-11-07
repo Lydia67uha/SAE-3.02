@@ -3,6 +3,7 @@ import time
 from feux import Feux
 from zone_conflit import ZoneConflit
 from capteur import Capteur
+from client import connecter, envoyer, fermer
 
 from generateur_trafic import (
     doit_creer_vehicule,
@@ -124,7 +125,7 @@ def vp_a_franchi_ligne(vp):
 # --------------------------------------------------
 # BOUCLE DE SIMULATION
 # --------------------------------------------------
-
+connecter()
 for tour in range(80):
 
     # ==================================================
@@ -881,3 +882,36 @@ for tour in range(80):
                 print(
                     "\n>>> RETOUR AU FONCTIONNEMENT NORMAL <<<"
                 )
+    liste_vehicules = []
+
+    for vehicule in vehicules:
+        informations = {
+            "id": vehicule.identifiant,
+            "type": vehicule.type_vehicule,
+            "axe": vehicule.axe,
+            "x": vehicule.x,
+            "y": vehicule.y,
+            "prioritaire": vehicule.prioritaire,
+            "sens": vehicule.sens,
+            "manoeuvre": vehicule.manoeuvre
+        }
+
+        liste_vehicules.append(informations)
+
+    message = {
+        "type": "ETAT_CARREFOUR",
+        "tour": tour,
+        "mode": mode,
+
+        "feux": {
+            "NORD": feux.couleur_pour_axe("NORD"),
+            "SUD": feux.couleur_pour_axe("SUD"),
+            "EST": feux.couleur_pour_axe("EST"),
+            "OUEST": feux.couleur_pour_axe("OUEST")
+        },
+
+        "vehicules": liste_vehicules
+    }
+
+    envoyer(message)
+fermer()

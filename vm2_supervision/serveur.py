@@ -1,6 +1,7 @@
 import socket
 import json
 import time
+import sqlite3
 
 
 def envoyer_json(client, message):
@@ -21,8 +22,21 @@ serveur = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 serveur.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-serveur.bind(("192.168.50.2", 5000))
+serveur.bind(("127.0.0.1", 5000))
 serveur.listen()
+
+bdd = sqlite3.connect("carrefour.db")
+
+bdd.execute("""
+CREATE TABLE IF NOT EXISTS etats (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tour INTEGER,
+    mode VARCHAR(30),
+    nombre_vehicules INTEGER
+)
+""")
+
+bdd.commit()
 
 print("Serveur en attente...")
 
@@ -45,7 +59,22 @@ while True:
 
     type_message = message["type"]
 
-    print("\nMessage reçu :", type_message)
+    print("Message reçu :", message)
+
+    if type_message == "ETAT_CARREFOUR":
+
+        nombre_vehicules = len(message["vehicules"])
+
+        bdd.execute(
+            "INSERT INTO etats (tour, mode, nombre_vehicules) VALUES (?, ?, ?)",
+            (
+                message["tour"],
+                message["mode"],
+                nombre_vehicules
+            )
+        )
+
+        bdd.commit()
 
     if type_message == "VP_DETECTE":
 
@@ -102,7 +131,7 @@ while True:
 
         break
 
-
+bdd.close()
 fichier_client.close()
 client.close()
 serveur.close()
