@@ -1,159 +1,68 @@
 import random
 
-from vehicule import Vehicule
+from vehicule import Vehicule, voie_entree
+
+
+# Chance (en %) qu'un véhicule apparaisse à chaque tour, selon la densité
+PROBABILITES = {"FAIBLE": 20, "MOYENNE": 40, "FORTE": 70}
+
+# Chance (en %) qu'un véhicule prioritaire apparaisse à chaque tour
+PROBABILITE_VP = 5
+
+TYPES_VP = ["AMBULANCE", "POLICE", "GENDARMERIE", "POMPIERS", "SAMU", "TRANSPORT_MEDICAL_URGENT"]
+
+
+def lancer_le_de(pourcentage):
+    # Un "dé" de 1 à 100 : vrai si on tombe dans le pourcentage
+    return random.randint(1, 100) <= pourcentage
 
 
 def doit_creer_vehicule(densite):
+    return lancer_le_de(PROBABILITES.get(densite, 40))
 
-    if densite == "FAIBLE":
-        probabilite = 20
 
-    elif densite == "MOYENNE":
-        probabilite = 40
-
-    elif densite == "FORTE":
-        probabilite = 70
-
-    else:
-        probabilite = 40
-
-    nombre = random.randint(1, 100)
-
-    if nombre <= probabilite:
-        return True
-
-    return False
+def doit_creer_vp():
+    return lancer_le_de(PROBABILITE_VP)
 
 
 def axe_aleatoire():
-
-    axes = [
-        "NORD",
-        "SUD",
-        "EST",
-        "OUEST"
-    ]
-
-    return random.choice(axes)
+    return random.choice(["NORD", "SUD", "EST", "OUEST"])
 
 
 def manoeuvre_aleatoire():
+    # "TOUT_DROIT" est deux fois plus fréquent
+    return random.choice(["TOUT_DROIT", "TOUT_DROIT", "DROITE", "GAUCHE"])
 
-    manoeuvres = [
-        "TOUT_DROIT",
-        "TOUT_DROIT",
-        "DROITE",
-        "GAUCHE"
-    ]
-
-    return random.choice(manoeuvres)
 
 def type_vp_aleatoire():
+    return random.choice(TYPES_VP)
 
-    types_vp = [
-        "AMBULANCE",
-        "POLICE",
-        "GENDARMERIE",
-        "POMPIERS",
-        "SAMU",
-        "TRANSPORT_MEDICAL_URGENT"
-    ]
 
-    return random.choice(types_vp)
+def creer_vehicule(identifiant, axe, manoeuvre="TOUT_DROIT", type_vehicule="VOITURE"):
+    """Crée un véhicule au bord de la route, dans la voie qui correspond
+    à sa manoeuvre. Tout ce qui n'est pas une "VOITURE" est prioritaire."""
 
-def creer_vehicule(
-    identifiant,
-    axe,
-    manoeuvre="TOUT_DROIT"
-):
+    voie = voie_entree(axe, manoeuvre)
 
     if axe == "NORD":
-        x = 47
-        y = 0
-
+        x, y = voie, 0
     elif axe == "SUD":
-        x = 53
-        y = 100
-
+        x, y = voie, 100
     elif axe == "OUEST":
-        x = 0
-        y = 53
+        x, y = 0, voie
+    else:
+        x, y = 100, voie
 
-    elif axe == "EST":
-        x = 100
-        y = 47
+    prioritaire = (type_vehicule != "VOITURE")
 
-    return Vehicule(
-        identifiant,
-        "VOITURE",
-        axe,
-        x,
-        y,
-        False,
-        manoeuvre
-    )
-
-
-def creer_vehicule_prioritaire(
-    identifiant,
-    axe,
-    type_vehicule,
-    manoeuvre="TOUT_DROIT"
-):
-
-    if axe == "NORD":
-        x = 47
-        y = 0
-
-    elif axe == "SUD":
-        x = 53
-        y = 100
-
-    elif axe == "OUEST":
-        x = 0
-        y = 53
-
-    elif axe == "EST":
-        x = 100
-        y = 47
-
-    return Vehicule(
-        identifiant,
-        type_vehicule,
-        axe,
-        x,
-        y,
-        True,
-        manoeuvre
-    )
+    return Vehicule(identifiant, type_vehicule, axe, x, y, prioritaire, manoeuvre)
 
 
 def entree_libre(axe, vehicules):
-
+    # L'entrée est libre si aucun véhicule de cette entrée n'est
+    # dans les 10 premières unités de la route
     for vehicule in vehicules:
-
-        if vehicule.axe != axe:
-            continue
-
-        if axe == "NORD" and vehicule.y <= 10:
-            return False
-
-        elif axe == "SUD" and vehicule.y >= 90:
-            return False
-
-        elif axe == "OUEST" and vehicule.x <= 10:
-            return False
-
-        elif axe == "EST" and vehicule.x >= 90:
+        if vehicule.axe == axe and vehicule.distance_du_centre() >= 40:
             return False
 
     return True
-
-def doit_creer_vp():
-
-    nombre = random.randint(1, 100)
-
-    if nombre <= 10:
-        return True
-
-    return False
