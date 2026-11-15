@@ -57,10 +57,12 @@ scene.setBackgroundBrush(QBrush(HERBE))
 
 
 class Vue(QGraphicsView):
+    """La vue graphique : la scène remplit toute la fenêtre."""
     # La scène s'adapte à la taille de la fenêtre et la remplit entièrement
     # (on rogne un peu les bords si besoin) : les routes touchent donc toujours
     # le bord de la fenêtre, sans herbe autour.
     def resizeEvent(self, evenement):
+        """Adapte la scène à la nouvelle taille de la fenêtre."""
         super().resizeEvent(evenement)
         self.fitInView(scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatioByExpanding)
 
@@ -82,10 +84,12 @@ disposition.addWidget(vue, 1)
 
 
 def rectangle(x, y, largeur, hauteur, couleur):
+    """Dessine un rectangle plein dans la scène."""
     scene.addRect(x, y, largeur, hauteur, QPen(couleur), QBrush(couleur))
 
 
 def ligne(x1, y1, x2, y2, epaisseur, pointillee):
+    """Dessine une ligne blanche, pleine ou pointillée."""
     stylo = QPen(BLANC)
     stylo.setWidth(epaisseur)
 
@@ -136,6 +140,7 @@ FLECHE_TOUT_DROIT_ET_DROITE = [(-9, 22), (-9, -10), (-14, -10), (-6, -26), (2, -
 
 
 def dessiner_fleche(x, y, angle, points):
+    """Dessine une flèche au sol à la position et avec l'angle donnés."""
     forme = QPolygonF([QPointF(px, py) for px, py in points])
     fleche = scene.addPolygon(forme, QPen(Qt.PenStyle.NoPen), QBrush(QColor(255, 255, 255, 230)))
     fleche.setPos(x, y)
@@ -166,6 +171,7 @@ couleurs_ampoules = {}
 
 
 def dessiner_feu(axe, x, y, vertical, vert_en_premier):
+    """Dessine un feu tricolore (boîtier et trois ampoules) pour une entrée."""
     # Le boîtier noir, puis 3 ampoules grises
     if vertical:
         rectangle(x, y, 18, 50, NOIR)
@@ -189,6 +195,7 @@ def dessiner_feu(axe, x, y, vertical, vert_en_premier):
 
 
 def mettre_feu(axe, couleur):
+    """Allume l'ampoule de la couleur donnée pour l'entrée, et éteint les autres."""
     # Allume l'ampoule de la bonne couleur, éteint les autres
     for i in range(3):
         if couleurs_ampoules[axe][i] == couleur:
@@ -238,15 +245,18 @@ def dessiner_vehicule(type_vehicule, couleur):
     groupe.eclairage = None
 
     def rect(x, y, largeur, hauteur, fond, contour=NOIR):
+        """Ajoute un rectangle au dessin du véhicule."""
         piece = scene.addRect(x, y, largeur, hauteur, QPen(QColor(contour)), QBrush(QColor(fond)))
         groupe.addToGroup(piece)
 
     def rond(x, y, diametre, fond, contour=NOIR):
+        """Ajoute un rond au dessin du véhicule."""
         piece = scene.addEllipse(x, y, diametre, diametre, QPen(QColor(contour)), QBrush(QColor(fond)))
         groupe.addToGroup(piece)
         return piece
 
     def lumiere(x, y, largeur, hauteur):
+        """Ajoute une lumière de gyrophare au dessin du véhicule."""
         # Ellipse transparente : sa couleur change quand le gyrophare clignote
         piece = scene.addEllipse(x, y, largeur, hauteur, QPen(Qt.PenStyle.NoPen), QBrush(QColor(0, 0, 0, 0)))
         groupe.addToGroup(piece)
@@ -316,6 +326,7 @@ RAYON_GAUCHE = 45
 
 
 def en_pixels(x, y):
+    """Convertit une position de la simulation (0 à 100) en pixels."""
     return x * ECHELLE_X, y * ECHELLE_Y
 
 
@@ -369,6 +380,7 @@ def pose_virage(d, coin, sens_entree, sens_sortie, rayon):
 
 
 def centre_depuis_avant(x, y, angle):
+    """Retourne le centre du véhicule à partir de la position de son avant."""
     # Le centre du véhicule est un demi-véhicule derrière son avant
     demi = LONGUEUR_VOITURE / 2
     radians = math.radians(angle)
@@ -385,6 +397,7 @@ class VehiculeAffiche:
     La méthode deplacer() est appelée 60 fois par seconde."""
 
     def __init__(self, infos, duree):
+        """Crée le véhicule affiché à partir des infos envoyées par la simulation."""
         self.type = infos["type"]
         self.couleur = PALETTE[infos["id"] % len(PALETTE)]
 
@@ -417,6 +430,7 @@ class VehiculeAffiche:
         self.deplacer()
 
     def point_de_depart(self, infos):
+        """Retourne la position affichée au départ, calculée depuis le bord d'entrée."""
         x, y = infos["x"], infos["y"]
 
         # Le bord de la scène par où le véhicule est entré, et sa distance à ce bord
@@ -437,6 +451,7 @@ class VehiculeAffiche:
         return bord
 
     def valeur(self, x, y, coin):
+        """Convertit une position en valeur unique (progression ou distance au coin) pour l'animer."""
         # Véhicule qui tourne : distance par rapport au coin.
         # Véhicule qui va tout droit : position de son avant, en pixels.
         if coin is not None:
@@ -445,10 +460,12 @@ class VehiculeAffiche:
         return en_pixels(x, y)
 
     def avancement(self):
+        """Retourne l'avancement du déplacement en cours, de 0 à 1."""
         # 0 = le déplacement commence, 1 = le véhicule est arrivé
         return min((time.monotonic() - self.debut) / self.duree, 1)
 
     def valeur_actuelle(self):
+        """Retourne la valeur animée à cet instant, entre départ et arrivée."""
         # Entre depart et arrivee, selon l'avancement
         t = self.avancement()
 
@@ -461,6 +478,7 @@ class VehiculeAffiche:
         return x, y
 
     def coin_actuel(self):
+        """Retourne la position animée du coin du virage."""
         # Le coin se décale quand le véhicule change de voie
         t = self.avancement()
 
@@ -470,6 +488,7 @@ class VehiculeAffiche:
         return x, y
 
     def pose_actuelle(self):
+        """Retourne le centre du véhicule et sa rotation à cet instant."""
         # Retourne le CENTRE du véhicule et sa rotation
         valeur = self.valeur_actuelle()
 
@@ -484,6 +503,7 @@ class VehiculeAffiche:
         return centre[0], centre[1], angle
 
     def nouvel_etat(self, infos, duree):
+        """Démarre un nouveau déplacement avec les infos reçues de la simulation."""
         # Le nouveau déplacement part de là où le véhicule est affiché
         self.depart = self.valeur_actuelle()
 
@@ -498,6 +518,7 @@ class VehiculeAffiche:
         self.duree = duree
 
     def deplacer(self):
+        """Place le dessin du véhicule à sa position actuelle."""
         x, y, angle = self.pose_actuelle()
 
         # Le point (16, 28) du dessin doit se trouver au centre du véhicule
@@ -513,6 +534,7 @@ class VehiculeAffiche:
         self.faire_clignoter()
 
     def faire_clignoter(self):
+        """Fait clignoter les gyrophares d'un véhicule prioritaire."""
         if len(self.sprite.gyrophares) == 0:
             return
 
@@ -552,6 +574,7 @@ class VehiculeAffiche:
         self.sprite.eclairage.setBrush(QBrush(route_eclairee))
 
     def supprimer(self):
+        """Retire le véhicule de la scène."""
         scene.removeItem(self.sprite)
 
 
@@ -573,6 +596,7 @@ connexion = None
 
 
 def enregistrer_dans_la_base(message):
+    """Enregistre dans la base l'état du tour et les véhicules sortis."""
     # Enregistre l'état du carrefour et les véhicules sortis pendant ce tour
     try:
         enregistrer_etat(message["tour"], message["mode"], len(message["vehicules"]))
@@ -584,6 +608,7 @@ def enregistrer_dans_la_base(message):
 
 
 def ecouter_simulation():
+    """Serveur TCP : attend la simulation, lit ses messages et les met en file (thread réseau)."""
     # Fonction exécutée par le thread réseau
     global connexion
 
@@ -626,6 +651,7 @@ def ecouter_simulation():
 
 
 def envoyer_commande(commande):
+    """Envoie une commande à la simulation, si elle est connectée."""
     # Envoie un ordre à la simulation (s'il y en a une de connectée)
     if connexion is None:
         return
@@ -697,6 +723,7 @@ disposition.addWidget(panneau)
 
 
 def afficher_mode(texte, couleur):
+    """Affiche le mode actuel dans l'étiquette, avec sa couleur."""
     etiquette_mode.setText(texte)
     style = "color: white; padding: 10px; font-weight: bold; border-radius: 6px; background-color: "
     etiquette_mode.setStyleSheet(style + couleur)
@@ -704,14 +731,17 @@ def afficher_mode(texte, couleur):
 
 # Les boutons envoient des commandes à la simulation
 def declencher_vp():
+    """Bouton : demande à la simulation de faire arriver un VP."""
     envoyer_commande({"action": "DECLENCHER_VP"})
 
 
 def changer_densite():
+    """Menu : envoie la densité choisie à la simulation."""
     envoyer_commande({"action": "DENSITE", "valeur": choix_densite.currentText().upper()})
 
 
 def reinitialiser():
+    """Bouton : remet la simulation à zéro."""
     envoyer_commande({"action": "RESET"})
 
 
@@ -724,6 +754,7 @@ choix_densite.currentTextChanged.connect(changer_densite)
 # Les données viennent de la base de données (voir base_de_donnees.py).
 
 def afficher_statistiques():
+    """Met à jour le résumé des passages de VP."""
     # Met à jour le petit résumé des passages de VP
     nombre, moyenne, minimum, maximum = statistiques_vp()
 
@@ -760,6 +791,7 @@ disposition_stats.addWidget(bouton_effacer)
 
 
 def remplir_tableau():
+    """Exécute la requête choisie et affiche son résultat dans le tableau."""
     # Exécute la requête choisie et affiche le résultat dans le tableau
     colonnes, lignes = lire_vue(choix_vue.currentText())
 
@@ -776,11 +808,13 @@ def remplir_tableau():
 
 
 def ouvrir_statistiques():
+    """Ouvre la fenêtre des statistiques."""
     remplir_tableau()
     dialogue_stats.show()
 
 
 def effacer_statistiques():
+    """Efface la base de données après confirmation."""
     question = "Effacer tous les véhicules et tous les états enregistrés ?"
     reponse = QMessageBox.question(dialogue_stats, "Effacer", question)
 
@@ -796,6 +830,7 @@ choix_vue.currentTextChanged.connect(remplir_tableau)
 
 
 def simulation_deconnectee():
+    """Efface les véhicules et bloque les boutons quand la simulation s'arrête."""
     # Plus de simulation : on efface tout et on bloque les boutons
     for vehicule in vehicules_affiches.values():
         vehicule.supprimer()
@@ -812,6 +847,7 @@ def simulation_deconnectee():
 
 
 def simulation_connectee():
+    """Active les boutons et envoie la densité choisie quand la simulation se connecte."""
     afficher_mode("NORMAL", COULEURS_MODE["NORMAL"])
     bouton_vp.setEnabled(True)
     bouton_reset.setEnabled(True)
@@ -821,6 +857,7 @@ def simulation_connectee():
 
 
 def traiter_etat(message):
+    """Met l'écran à jour avec l'état envoyé par la simulation."""
     # Met l'écran à jour avec l'état du carrefour envoyé par la simulation
     global duree_tour
 
@@ -857,6 +894,7 @@ def traiter_etat(message):
 
 
 def rafraichir():
+    """Appelée 60 fois par seconde : lit les messages reçus et anime les véhicules."""
     # Appelée 60 fois par seconde par le minuteur
 
     # 1) Lire les messages reçus de la simulation
