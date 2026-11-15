@@ -95,6 +95,8 @@ unzip projet.zip
 ls
 ```
 
+Si le projet est déjà décompressé, `unzip` demande pour chaque fichier `[y]es, [n]o, [A]ll, [N]one, [r]ename` : taper `A` (All) pour tout écraser.
+
 Le `ls` montre le nom du dossier créé (par exemple `SAE-3.02-main`). Il est appelé `NOM_DU_DOSSIER` dans la suite : le remplacer par le vrai nom.
 
 ## 2. VM2 : la supervision (à lancer en premier)
