@@ -44,6 +44,7 @@ VUES = {
 
 
 def ouvrir():
+    """Ouvre la base SQLite et crée les tables etats et vehicules si besoin."""
     # Ouvre la base et crée les tables si elles n'existent pas encore
     bdd = sqlite3.connect(FICHIER_BASE)
 
@@ -73,6 +74,7 @@ def ouvrir():
 
 
 def enregistrer_etat(tour, mode, nombre_vehicules):
+    """Enregistre l'état du carrefour (tour, mode, nombre de véhicules)."""
     bdd = ouvrir()
     bdd.execute(
         "INSERT INTO etats (tour, mode, nombre_vehicules) VALUES (?, ?, ?)",
@@ -83,6 +85,7 @@ def enregistrer_etat(tour, mode, nombre_vehicules):
 
 
 def enregistrer_vehicule(numero, type_vehicule, entree, manoeuvre, prioritaire, duree_passage):
+    """Enregistre un véhicule sorti de la simulation."""
     # duree_passage vaut None (NULL dans la base) pour un véhicule normal
     bdd = ouvrir()
     bdd.execute(
@@ -95,6 +98,7 @@ def enregistrer_vehicule(numero, type_vehicule, entree, manoeuvre, prioritaire, 
 
 
 def statistiques_vp():
+    """Retourne (nombre de passages, durée moyenne, minimum, maximum) des VP."""
     # Retourne (nombre de passages, durée moyenne, minimum, maximum) des VP
     bdd = ouvrir()
     resultat = bdd.execute(
@@ -106,6 +110,7 @@ def statistiques_vp():
 
 
 def lire_vue(nom):
+    """Exécute une des requêtes de VUES et retourne les noms de colonnes et les lignes."""
     # Retourne les noms des colonnes et les lignes d'une des requêtes de VUES
     bdd = ouvrir()
     curseur = bdd.execute(VUES[nom])
@@ -116,6 +121,7 @@ def lire_vue(nom):
 
 
 def effacer_la_base():
+    """Vide les deux tables."""
     bdd = ouvrir()
     bdd.execute("DELETE FROM etats")
     bdd.execute("DELETE FROM vehicules")
