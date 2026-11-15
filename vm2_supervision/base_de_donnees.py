@@ -65,7 +65,7 @@ def ouvrir():
             manoeuvre VARCHAR(12),
             prioritaire INTEGER,
             duree_passage REAL,
-            date_heure TEXT DEFAULT CURRENT_TIMESTAMP
+            date_heure TEXT DEFAULT (datetime('now', 'localtime'))
         )
     """)
 
