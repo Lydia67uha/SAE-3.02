@@ -37,7 +37,7 @@ reboot
 
 ## 1. Mettre le projet sur les deux VM
 
-Il faut copier le projet (le fichier ZIP) sur **chaque** VM. Deux méthodes, au choix.
+Il faut copier le projet (le fichier ZIP) sur **chaque** VM. Trois méthodes, au choix.
 
 ### Méthode A : télécharger le ZIP depuis Moodle directement dans la VM
 
@@ -73,7 +73,18 @@ scp -O C:\Users\VOTRE_NOM\Downloads\projet.zip utilisateur@192.168.1.73:~/
 - L'option `-O` évite l'erreur `subsystem request failed on channel 0` avec les versions récentes de scp.
 - Si le message est `Connection refused`, le serveur SSH ne tourne pas : voir la partie Problèmes courants.
 
-### Décompresser
+### Méthode C : avec git clone (si la VM a accès à GitHub)
+
+```
+sudo apt update
+sudo apt install -y git
+git clone https://github.com/Lydia67uha/SAE-3.02.git
+cd SAE-3.02
+```
+
+Avec cette méthode, il n'y a pas de ZIP à décompresser : le dossier du projet s'appelle `SAE-3.02` (c'est le `NOM_DU_DOSSIER` de la suite). Passer directement à l'étape 2.
+
+### Décompresser (méthodes A et B)
 
 Dans le dossier où se trouve le ZIP (`~` avec la méthode A) :
 
@@ -133,6 +144,19 @@ Boutons de l'interface (VM2) :
 - **Déclencher un VP** : crée un véhicule prioritaire.
 - **Densité du trafic** : faible, moyenne ou forte.
 - **Réinitialiser la simulation** : remet le carrefour à zéro si un bug le bloque.
+
+Exemple complet de l'utilisation (la VM2 est lancée en premier, ici avec l'adresse `192.168.1.20`) :
+
+```
+# VM2 (supervision)
+cd NOM_DU_DOSSIER/vm2_supervision
+source ../venv/bin/activate
+python3 interface.py
+
+# VM1 (simulation)
+cd NOM_DU_DOSSIER/vm1_carrefour
+python3 simulation.py 192.168.1.20
+```
 
 Des VP apparaissent aussi tout seuls (5 % de chance par tour, et seulement s'il n'y en a pas déjà un sur la route). Les réglages sont en haut de `vm1_carrefour/simulation.py`.
 
