@@ -23,6 +23,7 @@ commandes_recues = []
 
 
 def connecter():
+    """Se connecte à la supervision (VM2) et lance le thread qui écoute ses commandes."""
     global client
 
     ip = IP_SUPERVISION
@@ -47,6 +48,7 @@ def connecter():
 
 
 def ecouter():
+    """Lit en continu les commandes envoyées par la supervision (dans un thread)."""
     # Lit les messages de la supervision, un par ligne
     try:
         for ligne in client.makefile("r", encoding="utf-8"):
@@ -56,6 +58,7 @@ def ecouter():
 
 
 def lire_commandes():
+    """Retourne la liste des commandes reçues depuis le dernier appel."""
     # Retourne les commandes reçues depuis le dernier appel
     # (on les retire une par une : le thread d'écoute peut en ajouter pendant ce temps)
     commandes = []
@@ -67,6 +70,7 @@ def lire_commandes():
 
 
 def envoyer(message):
+    """Envoie un message JSON à la supervision. Retourne False si la connexion est fermée."""
     # Retourne False si la supervision a été fermée
     try:
         client.sendall((json.dumps(message) + "\n").encode())
@@ -76,5 +80,6 @@ def envoyer(message):
 
 
 def fermer():
+    """Ferme la connexion avec la supervision."""
     client.close()
     print("Connexion fermée.")

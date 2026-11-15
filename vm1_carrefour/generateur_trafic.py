@@ -13,28 +13,34 @@ TYPES_VP = ["AMBULANCE", "POLICE", "GENDARMERIE", "POMPIERS", "SAMU", "TRANSPORT
 
 
 def lancer_le_de(pourcentage):
+    """Retourne True avec une chance de 'pourcentage' sur 100."""
     # Un "dé" de 1 à 100 : vrai si on tombe dans le pourcentage
     return random.randint(1, 100) <= pourcentage
 
 
 def doit_creer_vehicule(densite):
+    """Retourne True si un véhicule normal doit apparaître ce tour-ci (selon la densité)."""
     return lancer_le_de(PROBABILITES.get(densite, 40))
 
 
 def doit_creer_vp():
+    """Retourne True si un véhicule prioritaire doit apparaître ce tour-ci."""
     return lancer_le_de(PROBABILITE_VP)
 
 
 def axe_aleatoire():
+    """Choisit au hasard l'entrée (NORD, SUD, EST ou OUEST) d'un nouveau véhicule."""
     return random.choice(["NORD", "SUD", "EST", "OUEST"])
 
 
 def manoeuvre_aleatoire():
+    """Choisit au hasard la manoeuvre d'un nouveau véhicule."""
     # "TOUT_DROIT" est deux fois plus fréquent
     return random.choice(["TOUT_DROIT", "TOUT_DROIT", "DROITE", "GAUCHE"])
 
 
 def type_vp_aleatoire():
+    """Choisit au hasard le type d'un véhicule prioritaire."""
     return random.choice(TYPES_VP)
 
 
@@ -59,6 +65,7 @@ def creer_vehicule(identifiant, axe, manoeuvre="TOUT_DROIT", type_vehicule="VOIT
 
 
 def entree_libre(axe, vehicules):
+    """Retourne True si de la place est libre au début de l'entrée donnée."""
     # L'entrée est libre si aucun véhicule de cette entrée n'est
     # dans les 10 premières unités de la route
     for vehicule in vehicules:

@@ -20,28 +20,35 @@ class Feux:
     DUREES = [8, 2, 1, 8, 2, 1]
 
     def __init__(self):
+        """Démarre au début du cycle, sans priorité active."""
         self.phase = 0
         self.nord_sud, self.est_ouest = self.PHASES[0]
         self.axe_prioritaire = None
 
     def phase_suivante(self):
+        """Passe à la phase suivante du cycle (et revient à la première après la dernière)."""
         self.phase = (self.phase + 1) % len(self.PHASES)
         self.nord_sud, self.est_ouest = self.PHASES[self.phase]
 
     def duree_phase(self):
+        """Retourne la durée de la phase actuelle, en tours de simulation."""
         return self.DUREES[self.phase]
 
     def tous_rouges(self):
+        """Passe tous les feux au rouge."""
         self.nord_sud = "ROUGE"
         self.est_ouest = "ROUGE"
 
     def activer_priorite(self, axe):
+        """Donne le vert à l'entrée du VP (axe) et le rouge aux trois autres."""
         self.axe_prioritaire = axe
 
     def desactiver_priorite(self):
+        """Arrête la priorité : les feux reviennent au cycle normal."""
         self.axe_prioritaire = None
 
     def couleur_pour_axe(self, axe):
+        """Retourne la couleur du feu ('VERT', 'ORANGE' ou 'ROUGE') pour l'entrée donnée."""
         # Priorité active : vert pour l'entrée du VP, rouge pour les autres
         if self.axe_prioritaire is not None:
             if axe == self.axe_prioritaire:
@@ -70,5 +77,6 @@ class Feux:
         self.nord_sud, self.est_ouest = self.PHASES[self.phase]
 
     def afficher(self):
+        """Affiche les couleurs des deux groupes de feux dans la console."""
         print("Nord/Sud :", self.nord_sud)
         print("Est/Ouest :", self.est_ouest)
