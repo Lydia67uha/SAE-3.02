@@ -38,12 +38,14 @@ class Simulation:
     """
 
     def __init__(self):
+        """Crée le carrefour : capteur, zone de conflit au centre et densité moyenne."""
         self.capteur = Capteur()
         self.zone = ZoneConflit(40, 60, 40, 60)
         self.densite = "MOYENNE"
         self.reinitialiser()
 
     def reinitialiser(self):
+        """Remet le carrefour à zéro (feux, véhicules, mode). La densité est conservée."""
         # Remet le carrefour à zéro (la densité choisie est conservée)
         self.feux = Feux()
         self.vehicules = []
@@ -65,6 +67,7 @@ class Simulation:
         self.sortis = []                 # véhicules sortis pendant ce tour
 
     def un_tour(self):
+        """Fait avancer la simulation d'un tour."""
         self.tour += 1
         self.sortis = []
         self.creer_vehicules()
@@ -75,6 +78,7 @@ class Simulation:
         self.gerer_le_mode()
 
     def executer(self, commande):
+        """Exécute une commande reçue de la supervision (VP, densité ou reset)."""
         # Commandes envoyées par les boutons de l'interface
         action = commande["action"]
 
@@ -91,6 +95,7 @@ class Simulation:
     # Création des véhicules
 
     def creer_vehicules(self):
+        """Crée les nouveaux véhicules du tour : VP demandé ou aléatoire, et véhicule normal."""
         # Un VP est créé si on l'a demandé avec le bouton, ou avec un "dé"
         # (seulement s'il n'y a pas déjà un VP sur la route)
         veut_un_vp = self.vp_a_creer > 0
@@ -106,6 +111,7 @@ class Simulation:
             self.ajouter_vehicule(False)
 
     def il_y_a_un_vp(self):
+        """Retourne True s'il y a au moins un VP sur la route."""
         for vehicule in self.vehicules:
             if vehicule.prioritaire:
                 return True
@@ -113,6 +119,7 @@ class Simulation:
         return False
 
     def ajouter_vehicule(self, prioritaire):
+        """Ajoute un véhicule sur une entrée au hasard. Retourne False si l'entrée est occupée."""
         # Retourne False si l'entrée choisie n'est pas libre
         axe = axe_aleatoire()
 
@@ -134,6 +141,7 @@ class Simulation:
     # Détection des véhicules prioritaires
 
     def detecter_les_vp(self):
+        """Repère les VP qui entrent dans la zone du capteur."""
         for vehicule in self.vehicules:
 
             # On ne traite chaque VP qu'une seule fois
@@ -143,6 +151,7 @@ class Simulation:
                     self.nouveau_vp_detecte(vehicule)
 
     def nouveau_vp_detecte(self, vp):
+        """Réagit à un VP détecté : sécurisation, ou mise en attente s'il y en a déjà un."""
         # Premier VP : on lance la procédure de sécurisation
         if self.mode == "NORMAL" and self.vp_en_cours is None:
             self.mode = "SECURISATION"
@@ -165,6 +174,7 @@ class Simulation:
     # Déplacement des véhicules
 
     def deplacer_les_vehicules(self):
+        """Fait avancer chaque véhicule qui peut le faire (voie, vitesse, collisions)."""
         for vehicule in self.vehicules:
             vehicule.changer_de_voie(self.vehicules)
 
@@ -182,6 +192,7 @@ class Simulation:
             vehicule.avancer(vehicule.vitesse(self.vehicules))
 
     def peut_avancer(self, vehicule):
+        """Retourne True si le véhicule a le droit d'avancer selon le mode et les feux."""
         # Pendant la priorité, les règles sont particulières
         if self.mode == "PRIORITE":
 
@@ -203,6 +214,7 @@ class Simulation:
         return vehicule.peut_avancer(self.feux)
 
     def est_devant_un_vp(self, vehicule):
+        """Retourne True si le véhicule est devant un VP qui passe, sur la même entrée."""
         # Devant le VP en cours, ou devant un des VP qui passent avec lui
         for vp in [self.vp_en_cours] + self.vp_groupe:
 
@@ -218,6 +230,7 @@ class Simulation:
         return False
 
     def mesurer_les_passages(self):
+        """Calcule la durée de passage de chaque VP, de sa détection à sa sortie du milieu."""
         # Durée de passage d'un VP : du tour où il est détecté jusqu'au tour où
         # il quitte le milieu du carrefour (en secondes)
         for vp in self.vehicules:
@@ -235,6 +248,7 @@ class Simulation:
                 self.durees_de_passage[vp.identifiant] = tours * DUREE_TOUR
 
     def supprimer_les_vehicules_sortis(self):
+        """Retire les véhicules sortis de l'écran et les garde pour la base de données."""
         restants = []
 
         for v in self.vehicules:
@@ -258,6 +272,7 @@ class Simulation:
     # Les modes du carrefour (en fin de tour)
 
     def gerer_le_mode(self):
+        """Fait évoluer le mode de la simulation (normal, sécurisation, priorité, retour)."""
 
         if self.mode == "NORMAL":
             self.cycle_normal()
@@ -292,6 +307,7 @@ class Simulation:
             self.vp_suivant_ou_retour_normal()
 
     def cycle_normal(self):
+        """Fait avancer le cycle normal des feux."""
         self.compteur_phase += 1
 
         if self.compteur_phase < self.feux.duree_phase():
@@ -305,6 +321,7 @@ class Simulation:
         self.compteur_phase = 0
 
     def tous_les_vp_sont_engages(self):
+        """Retourne True si tous les VP qui passent sont assez avancés pour couper le vert."""
         # Un VP qui a déjà tourné est engagé (il a quitté le milieu du carrefour)
         for vp in [self.vp_en_cours] + self.vp_groupe:
 
@@ -315,6 +332,7 @@ class Simulation:
         return True
 
     def vp_suivant_ou_retour_normal(self):
+        """Passe au VP suivant s'il y en a un en attente, sinon revient au cycle normal."""
         # Un VP attend : on recommence la procédure pour lui
         if len(self.vp_en_attente) > 0:
 
@@ -343,6 +361,7 @@ class Simulation:
     # État envoyé à l'interface
 
     def etat(self):
+        """Retourne l'état du carrefour (feux, véhicules, mode...) à envoyer à la supervision."""
         vehicules = []
 
         for v in self.vehicules:

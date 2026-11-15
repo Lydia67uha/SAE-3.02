@@ -51,6 +51,7 @@ AXE_OPPOSE = {"NORD": "SUD", "SUD": "NORD", "OUEST": "EST", "EST": "OUEST"}
 
 
 def voie_pour(manoeuvre):
+    """Retourne la voie utilisée pour une manoeuvre : INT pour tourner à gauche, EXT sinon."""
     # Voie de gauche pour tourner à gauche, voie de droite sinon
     if manoeuvre == "GAUCHE":
         return "INT"
@@ -59,12 +60,15 @@ def voie_pour(manoeuvre):
 
 
 def voie_entree(axe, manoeuvre):
+    """Retourne la position (x ou y) de la voie d'entrée pour cet axe et cette manoeuvre."""
     return VOIES[axe][voie_pour(manoeuvre)]
 
 
 class Vehicule:
+    """Un véhicule du carrefour (voiture ou véhicule prioritaire)."""
 
     def __init__(self, identifiant, type_vehicule, axe, x, y, prioritaire, manoeuvre="TOUT_DROIT"):
+        """Crée le véhicule à son point d'entrée, dans la voie de sa manoeuvre."""
         self.identifiant = identifiant
         self.type_vehicule = type_vehicule
         self.axe = axe                    # entrée par laquelle il est arrivé
@@ -104,6 +108,7 @@ class Vehicule:
             self.coin = (position, self.y)
 
     def avancer(self, distance):
+        """Avance de 'distance' dans son sens, et tourne s'il atteint le coin de son virage."""
         self.attente = 0
 
         dx, dy = DIRECTIONS[self.sens]
@@ -123,6 +128,7 @@ class Vehicule:
                 self.voie = voie_pour(self.manoeuvre)
 
     def distance_du_centre(self):
+        """Retourne la distance qui reste avant le milieu du carrefour (négative une fois dépassé)."""
         # Distance qu'il reste avant le milieu du carrefour (négative s'il l'a dépassé)
         if self.axe == "NORD":
             return 50 - self.y
@@ -136,11 +142,13 @@ class Vehicule:
         return self.x - 50
 
     def progression(self):
+        """Retourne la position le long de la route, dans le sens de roulage."""
         # Position le long de la route, dans le sens de roulage
         dx, dy = DIRECTIONS[self.sens]
         return self.x * dx + self.y * dy
 
     def peut_avancer(self, feux):
+        """Retourne True si le feu de son entrée lui permet d'avancer."""
         if feux.couleur_pour_axe(self.axe) == "VERT":
             return True
 
@@ -151,13 +159,16 @@ class Vehicule:
         return distance <= 10 or distance > 15
 
     def est_sorti(self):
+        """Retourne True si le véhicule est entièrement hors de l'écran."""
         # Marge de 10 : on le supprime quand il est entièrement hors de l'écran
         return not (-10 <= self.x <= 110 and -10 <= self.y <= 110)
 
     def dans_le_carrefour(self):
+        """Retourne True si le véhicule est dans le carrefour."""
         return 38 <= self.x <= 62 and 38 <= self.y <= 62
 
     def vitesse(self, vehicules):
+        """Retourne la distance parcourue ce tour-ci (un VP va plus vite quand la route est libre)."""
         # Un véhicule normal avance de 5 par tour. Un VP accélère (10) quand la
         # route est libre devant lui, loin du feu ou après l'avoir franchi.
         if not self.prioritaire or self.devant_dans_la_voie(vehicules, 30):
@@ -190,6 +201,7 @@ class Vehicule:
         return min(x1, x2) - demi_x, max(x1, x2) + demi_x, min(y1, y2) - demi_y, max(y1, y2) + demi_y
 
     def touche(self, autre, avant=0, arriere=0):
+        """Retourne True si ce véhicule touche l'autre (avec une marge devant et derrière)."""
         # Deux véhicules se touchent si leurs rectangles se recouvrent
         a = self.boite(avant, arriere)
         b = autre.boite()
@@ -273,6 +285,7 @@ class Vehicule:
     # Changement de voie (pour doubler ou laisser passer un VP)
 
     def devant_dans_la_voie(self, vehicules, distance, voie=None):
+        """Retourne True si un véhicule est devant celui-ci, dans la voie, à moins de 'distance'."""
         # Un véhicule est-il devant moi, dans ma voie (ou dans la voie "voie"),
         # à moins de "distance" ?
         voie = voie or self.voie
@@ -291,6 +304,7 @@ class Vehicule:
         return False
 
     def vp_derriere(self, vehicules, distance, toutes_les_voies=False):
+        """Retourne True si un VP arrive derrière ce véhicule, à moins de 'distance'."""
         # Un VP arrive-t-il derrière moi (dans ma voie, ou dans n'importe laquelle) ?
         for autre in vehicules:
 
@@ -309,6 +323,7 @@ class Vehicule:
         return False
 
     def placer_dans_la_voie(self, voie):
+        """Place le véhicule dans la voie donnée (EXT ou INT)."""
         position = VOIES[self.route][voie]
 
         if self.sens == "BAS" or self.sens == "HAUT":
@@ -330,6 +345,7 @@ class Vehicule:
                 self.coin = (self.coin[0], position)
 
     def voie_libre(self, vehicules, voie, marge=10):
+        """Retourne True si le véhicule peut se placer dans l'autre voie sans en toucher un autre."""
         # Peut-on passer dans l'autre voie ? Il ne doit y avoir personne à côté,
         # ni juste devant, ni juste derrière ("marge" = distance vérifiée)
         copie = copy.copy(self)
@@ -342,6 +358,7 @@ class Vehicule:
         return True
 
     def voie_necessaire(self):
+        """Retourne la voie que le véhicule doit prendre, ou None si toutes conviennent."""
         # La voie de sa manoeuvre. Après son virage, toutes les voies conviennent.
         if self.a_tourne:
             return None
@@ -349,6 +366,7 @@ class Vehicule:
         return voie_pour(self.manoeuvre)
 
     def peut_changer_de_voie(self):
+        """Retourne True si le véhicule a le droit de changer de voie à sa position."""
         # Possible avant ou après le feu. Au milieu du carrefour, seulement pour
         # aller tout droit ou une fois le virage terminé.
         if self.dans_le_carrefour():
@@ -386,6 +404,7 @@ class Vehicule:
                 self.placer_dans_la_voie("EXT")
 
     def retourner_dans_sa_voie(self, vehicules, necessaire, presque_au_feu):
+        """Fait revenir le véhicule dans sa voie quand c'est possible."""
         # Un véhicule normal laisse d'abord passer le VP qui arrive derrière lui
         # (sauf presque au feu : sa manoeuvre passe avant)
         if not self.prioritaire and not presque_au_feu:
@@ -404,6 +423,7 @@ class Vehicule:
             self.placer_dans_la_voie(necessaire)
 
     def doubler(self, vehicules):
+        """Un VP ralenti par le véhicule devant lui le double par l'autre voie."""
         # Un VP ralenti par le véhicule devant lui le double par l'autre voie.
         # S'il doit tourner, il doit avoir le temps de revenir dans sa voie.
         if not self.devant_dans_la_voie(vehicules, 16):
